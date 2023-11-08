@@ -1,1 +1,2 @@
 # Network-Protocol-Project
+The purpose of this project is to create a client-server connection with custom netowrk protocol. The type of connection that we will use is a TCP connection that allows for a strong connection to be established between the two. The protocol will then allow for messaging betweent the client and server until one of the two decides they no longer want to communicate with each other. At that time, the program will end.
