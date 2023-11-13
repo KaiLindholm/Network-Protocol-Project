@@ -11,7 +11,7 @@ class Server:
         self.transmitters = []
         # set up the server socket
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-        self.server_socket.bind(self.host, self.port)
+        self.server_socket.bind((self.host, self.port))
     
     def add_transmitter(self, transmitter):
         self.transmitters.append(transmitter)
@@ -24,22 +24,38 @@ class Server:
         data = self.server_socket.recv(1024)
         deserialized_payload = json.loads(data.decode())
         return deserialized_payload
-    
-    def handshake_protocol(self):
-        # init_handshake = Payload.Payload(None, None, None, None)
-        pass
 
+    def handshake_protocol(self):  
+        # Send a handshake message to the client
+        handshake_message = "ACK"
+        self.server_socket.sendall(handshake_message.encode('utf-8'))
+
+        # Receive the client's handshake response
+        response_message = self.server_socket.recv(1024).decode('utf-8')
+        print(f"Received handshake response: {response_message}")
+
+        if response_message == "ACK": 
+            print("Handshake completed.")
+            return True
+        else: 
+            print("Handshake failed.")
+            return False
+        
     def run(self):
         # Accept incoming connections and handle them
         while True:
+            print("Waiting for a connection...")
             client_socket, address = self.server_socket.accept()
             print(f"Connection from {address} has been established!")
-
-            while client_socket: # while the trasnport layer connection is open
-                # Receive data from the client
-                pass 
             
-            client_socket.close()
+            if self.handshake_protocol():
+                while client_socket: # while the trasnport layer connection is open
+                    pass
+                
+                client_socket.close()
+            else: 
+                client_socket.close()
+                continue
 
 class Beacon: 
     transmitter_id = 0
@@ -52,4 +68,6 @@ class Beacon:
         self.server_socket.sendall(serialized_payload.encode())
         
 if __name__ == "__main__":  
-    server = Server('192.168.1.15', 123456)
+    server = Server('192.168.1.15', 12345)
+    server.listen()
+    server.run()
