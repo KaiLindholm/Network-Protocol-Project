@@ -1,23 +1,37 @@
-
 import socket
 
-# Define the server address and port
-SERVER_ADDRESS = '127.0.0.1'
-SERVER_PORT = 1234
+def start_client():
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_host = '127.0.0.1'
+    server_port = 12345
 
-# Create a socket object
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((server_host, server_port))
+    print(f"Connected to server at {server_host}:{server_port}")
 
-# Connect the socket to the server
-client_socket.connect((SERVER_ADDRESS, SERVER_PORT))
+    perform_handshake(client_socket)
 
-# Send data to the server
-data = 'Hello, server!'
-client_socket.sendall(data.encode())
+    while True:
+        message = input("Enter message (type 'exit' to close): ")
+        if message.lower() == 'exit':
+            break
 
-# Receive data from the server
-received_data = client_socket.recv(1024)
-print(received_data.decode())
+        client_socket.sendall(message.encode('utf-8'))
 
-# Close the socket
-client_socket.close()
+        response = client_socket.recv(1024).decode('utf-8')
+        print(f"Received response: {response}")
+
+    client_socket.close()
+
+def perform_handshake(client_socket):
+    # Receive the server's handshake message
+    handshake_message = client_socket.recv(1024).decode('utf-8')
+    print(f"Received handshake message: {handshake_message}")
+
+    # Send a handshake response to the server
+    response_message = "Hello, server! Let's start messaging."
+    client_socket.sendall(response_message.encode('utf-8'))
+
+    print("Handshake completed.")
+
+if __name__ == "__main__":
+    start_client()
