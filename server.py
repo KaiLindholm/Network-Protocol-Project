@@ -25,13 +25,16 @@ class Server:
         deserialized_payload = json.loads(data.decode())
         return deserialized_payload
 
-    def handshake_protocol(self):  
+    def send_payload(self, client_socket, payload: DataPacket): 
+        serialized_payload = json.dumps(payload.__dict__())
+        client_socket.sendall(serialized_payload.encode())
+        
+    def handshake_protocol(self, client_socket, client_address):  
         # Send a handshake message to the client
         handshake_message = "ACK"
-        self.server_socket.sendall(handshake_message.encode('utf-8'))
-
+        self.send_payload(client_socket, DataPacket.Payload(0, client_address, 0, handshake_message))
         # Receive the client's handshake response
-        response_message = self.server_socket.recv(1024).decode('utf-8')
+        response_message = client_socket.recv(1024).decode('utf-8')
         print(f"Received handshake response: {response_message}")
 
         if response_message == "ACK": 
@@ -48,7 +51,7 @@ class Server:
             client_socket, address = self.server_socket.accept()
             print(f"Connection from {address} has been established!")
             
-            if self.handshake_protocol():
+            if self.handshake_protocol(client_socket, address):
                 while client_socket: # while the trasnport layer connection is open
                     pass
                 
@@ -63,9 +66,6 @@ class Beacon:
         Beacon.transmitter_id += 1
         self.transmitter_id = Beacon.transmitter_id
 
-    def send_payload(self, payload: DataPacket): 
-        serialized_payload = json.dumps(payload, cls=DataPacket.PayloadEncoder)
-        self.server_socket.sendall(serialized_payload.encode())
         
 if __name__ == "__main__":  
     server = Server('192.168.1.15', 12345)

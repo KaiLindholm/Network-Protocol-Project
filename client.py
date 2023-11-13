@@ -6,27 +6,29 @@ class Client:
         self.client_host = client_host
         self.server_host = server_host
         self.server_port = server_port
+        self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
         
     def run(self):
-        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         
-        client_socket.connect((self.server_host, self.server_port))
+        self.client_socket.connect((self.server_host, self.server_port))
         print(f"Connected to server at {self.server_host}:{self.server_port}")
 
-        self.perform_handshake(client_socket)
+        self.perform_handshake()
 
         while True:
             message = input("Enter message (type 'exit' to close): ")
             if message.lower() == 'exit':
-                self.send_payload(DataPacket.Payload(0, self.client_host, 0, "NCONN"))   
+                self.send_payload(DataPacket.Payload(0, self.server_host, 0, "NCONN"))   
                 break
             
-            client_socket.send(DataPacket.Payload(0, self.client_host, 0, message).encode('utf-8'))
+            self.send_payload(DataPacket.Payload(0, self.server_host, 0, message))   
 
-            response = client_socket.recv(1024).decode('utf-8')
+            response = self.recieve_payload()
+            
             print(f"Received response: {response}")
 
-        client_socket.close()
+        self.client_socket.close()
 
     def perform_handshake(self, client_socket):
         # Receive the server's handshake message
@@ -34,13 +36,18 @@ class Client:
         print(f"Received handshake message: {handshake_message}")
         
         # Send a handshake response to the server
-        meesage = "ACK"
-        client_socket.send(DataPacket.Payload(0, self.client_host, 0, meesage).encode('utf-8'))
-
+        message = "ACK"
+        self.send_payload(DataPacket.Payload(0, self.server_host, 0, message))
+        
         print("Handshake completed.")
         
+    def recieve_payload(self) -> DataPacket:
+        data = self.client_socket.recv(1024)
+        deserialized_payload = json.loads(data.decode())
+        return deserialized_payload  
+    
     def send_payload(self, payload: DataPacket): 
-        serialized_payload = json.dumps(payload, cls=DataPacket.PayloadEncoder)
+        serialized_payload = json.dumps(payload.__dict__())
         self.client_socket.sendall(serialized_payload.encode())
 
 
