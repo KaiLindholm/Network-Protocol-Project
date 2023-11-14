@@ -20,10 +20,12 @@ class Server:
     def listen(self):
         self.server_socket.listen() 
         
-    def recieve_payload(self) -> DataPacket:
-        data = self.server_socket.recv(1024)
-        deserialized_payload = json.loads(data.decode())
-        return deserialized_payload
+    def recieve_payload(self, client_socket) -> DataPacket:
+        data = client_socket.recv(1024)
+        print(json.loads(data.decode()))
+        print(type(json.loads(data.decode())))
+        payload = DataPacket.Payload().fromDict(json.loads(data.decode()))
+        return payload
 
     def send_payload(self, client_socket, payload: DataPacket): 
         serialized_payload = json.dumps(payload.__dict__())
@@ -34,11 +36,13 @@ class Server:
         handshake_message = "ACK"
         self.send_payload(client_socket, DataPacket.Payload(0, client_address, 0, handshake_message))
         # Receive the client's handshake response
-        response_message = client_socket.recv(1024).decode('utf-8')
-        print(f"Received handshake response: {response_message}")
+        response = self.recieve_payload(client_socket)
+        
+        print(f"Received handshake response: {response}")
 
-        if response_message == "ACK": 
+        if response.getData() == "ACK": 
             print("Handshake completed.")
+            self.send_payload(client_socket, DataPacket.Payload(0, client_address, 0, "CONN"))
             return True
         else: 
             print("Handshake failed.")
@@ -53,8 +57,16 @@ class Server:
             
             if self.handshake_protocol(client_socket, address):
                 while client_socket: # while the trasnport layer connection is open
-                    pass
-                
+                    data = self.recieve_payload(client_socket)
+                    print(f"Client {address} sent a message. {data.getData()}")
+                    
+                    
+                    if data.getData() == 'NCONN':
+                        print(f"Client {address} has closed the connection.")
+                        client_socket.close()
+                        break
+                    else:
+                        self.send_payload(client_socket, DataPacket.Payload(0, address, 0, data.getData().upper()))
                 client_socket.close()
             else: 
                 client_socket.close()

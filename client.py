@@ -10,7 +10,6 @@ class Client:
 
         
     def run(self):
-        
         self.client_socket.connect((self.server_host, self.server_port))
         print(f"Connected to server at {self.server_host}:{self.server_port}")
 
@@ -30,9 +29,9 @@ class Client:
 
         self.client_socket.close()
 
-    def perform_handshake(self, client_socket):
+    def perform_handshake(self):
         # Receive the server's handshake message
-        handshake_message = client_socket.recv(1024).decode('utf-8')
+        handshake_message = self.client_socket.recv(1024).decode('utf-8')
         print(f"Received handshake message: {handshake_message}")
         
         # Send a handshake response to the server
