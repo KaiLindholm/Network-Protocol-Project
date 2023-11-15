@@ -28,20 +28,32 @@ class Server(handler.protocolHandler):
             client_socket, address = self.server_socket.accept()
             print(f"Connection from {address} has been established!")
             
-            if self.handshake_protocol(client_socket, address):
+            message = self.recieve_payload(client_socket)
+            print(f"Received handshake message: {message}")
+            check = message.getData() == 'REQ'; 
+
+            if check:
+                print("Handshake Initiator: Sending ACK")
+                self.send_payload(client_socket, DataPacket.Payload(0, address, 0, 'ACK'))
+            else: 
+                print('Handshake failed.')
+                client_socket.close()
+                continue
+            
+            if check:   # the handshake was successful
                 while client_socket: # while the trasnport layer connection is open
                     data = self.recieve_payload(client_socket)
-                    print(f"Client {address} sent a message. {data.getData()}")
-                    
-                    if data.getData() == 'NCONN':
-                        print(f"Client {address} has closed the connection.")
-                        client_socket.close()
-                        break
-                    else:
-                        self.send_payload(client_socket, DataPacket.Payload(0, address, 0, data.getData().upper()))
+                    if data:
+                        print(f"Client {address} sent a message. {data.getData()}")
                         
-                client_socket.close()
+                        if data.getData() == 'NCONN':
+                            print(f"Client {address} has closed the connection.")
+                            client_socket.close()
+                            break
+                        else:
+                            self.send_payload(client_socket, DataPacket.Payload(0, address, 0, data.getData()))
             else: 
+                print('Handshake failed.')
                 client_socket.close()
                 continue
 

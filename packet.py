@@ -2,16 +2,15 @@
 import json
 
 class Payload: 
-    def __init__(self, cone_ID = 0, destIPAddr = '', packet_ID = 0, data_len = 0, data = '123'):
+    def __init__(self, cone_ID = 0, destIPAddr = '', packet_ID = 0, data = '123'):
         self.cone_ID = cone_ID
         self.destIPAddr = destIPAddr            # the destination address of the packet
         self.packet_ID = packet_ID              
         self.data_len = len(data)    # the length of the data payload
         self.data = data        # the data payload
-    
-    @classmethod
-    def from_json(cls, data: dict):
-        return cls(**data)
+
+    def from_json(data: dict):
+        return Payload(data['cone_ID'], data['destIPAddr'], data['packet_ID'], data['data'])
     
     def to_json(self):
         return json.dumps(self.to_dict())

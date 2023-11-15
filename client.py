@@ -18,8 +18,17 @@ class Client(handler.protocolHandler):
 
         # intiate handshake protocol
         # send REQ 
+        self.send_payload(self.socket, DataPacket.Payload(0, self.server_host, 0, "REQ"))
         
-        self.send_payload(self.socket, DataPacket.Payload(0, self.server_host, 0, data="REQ"))
+        res = self.recieve_payload(self.socket)
+        
+        if res.getData() == 'ACK':
+            print("Handshake successful.")
+        else: 
+            print("Handshake failed.")
+            print(res)
+            self.socket.close()
+            return
         
         while True:
             message = input("Enter message (type 'exit' to close): ")
@@ -27,12 +36,11 @@ class Client(handler.protocolHandler):
                 self.send_payload(self.socket, DataPacket.Payload(0, self.server_host, 0, "NCONN"))   
                 break
             
-            self.send_payload(self.socket, DataPacket.Payload(0, self.server_host, 0, message))   
-
-            response = self.recieve_payload()
+            self.send_payload(self.socket, DataPacket.Payload(0, self.server_host, 0, message))  
             
-            print(f"Received response: {response}")
-
+            res = self.recieve_payload(self.socket) 
+            print("ECHO: " + res.getData())
+        print("Closing connection...")
         self.socket.close()
 
     def perform_handshake(self):
@@ -46,5 +54,5 @@ class Client(handler.protocolHandler):
         print("Handshake completed.")
         
 if __name__ == "__main__":
-    client = Client('192.168.4.31', 12345)
+    client = Client(server_host='192.168.4.31', server_port = 12345)
     client.run()
