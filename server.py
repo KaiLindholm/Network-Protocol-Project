@@ -1,4 +1,3 @@
-
 import packet as DataPacket
 import socket
 
@@ -8,17 +7,17 @@ class Server(handler.protocolHandler):
     def __init__(self, port = 9999):
         self.host = self.get_host_ip()
         self.port = port
-        self.transmitters = [] 
+        # self.transmitters = [] 
         # set up the server socket
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
         self.server_socket.bind((self.host, self.port))
         
-    def add_transmitter(self, transmitter):
-        self.transmitters.append(transmitter)
+    # def add_transmitter(self, transmitter):     # not implementing multithreading for multiple clients
+    #     self.transmitters.append(transmitter)
     
     # Listen for incoming connections
     def listen(self):
-        self.server_socket.listen() 
+        self.server_socket.listen(1) 
         print(f"Server is listening on {self.host}:{self.port}")
 
     def run(self):
@@ -58,7 +57,14 @@ class Server(handler.protocolHandler):
                 continue
 
 if __name__ == "__main__":  
-    server = Server(port = 12345)
+    server = Server(port = 3002)
     server.listen()
-    server.run()
+    try:
+        server.run()
+    except KeyboardInterrupt:
+        print("\nClosing server...")
+        server.send_payload(server.server_socket, DataPacket.Payload(0, server.host, 0, "NCONN"))
+        server.server_socket.close()
+        exit(0)
+        
     

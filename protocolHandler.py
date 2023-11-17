@@ -2,17 +2,20 @@ import packet as DataPacket
 import json 
 import socket
 
-class protocolHandler:
-    def recieve_payload(self, socket) -> DataPacket:
+class protocolHandler:   # this handles sending and recieving data packets by the transport layer
+    def recieve_payload(self, socket) -> DataPacket:    
         data = socket.recv(1024)
         if not data:
             return None
-        
-        return DataPacket.Payload.from_json(json.loads(data.decode('utf-8')))
+        else: 
+            return DataPacket.Payload.from_json(json.loads(data.decode('utf-8')))
 
-    def send_payload(self, socket, payload: DataPacket): 
+    def send_payload(self, socket, payload: DataPacket) -> bool: 
         serialized_payload = payload.to_json()
-        socket.sendall(serialized_payload.encode('utf-8'))
+        try:
+            socket.sendall(serialized_payload.encode('utf-8'))
+        except Exception as e:
+            return False
         
     def get_host_ip(self):
         try:
