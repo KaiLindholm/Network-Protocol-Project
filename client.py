@@ -20,9 +20,8 @@ class Client(handler.protocolHandler):
         # send REQ 
         self.send_payload(self.socket, DataPacket.Payload(0, self.server_host, 0, "REQ"))
         
-        res = self.recieve_payload(self.socket)
-        
-        if res.getData() == 'ACK':
+        # check if server responds with ACK        
+        if self.recieve_payload(self.socket).getData() == 'ACK':
             print("Handshake successful.")
         else: 
             print("Handshake failed.")
@@ -31,7 +30,7 @@ class Client(handler.protocolHandler):
             return
         
         while True:
-            message = input("Enter message (type 'exit' to close): ")
+            message = input("$ ")
             if message.lower() == 'exit':
                 self.send_payload(self.socket, DataPacket.Payload(0, self.server_host, 0, "NCONN"))   
                 break
@@ -42,17 +41,24 @@ class Client(handler.protocolHandler):
             print("ECHO: " + res.getData())
         print("Closing connection...")
         self.socket.close()
-
-    def perform_handshake(self):
-        # Receive the server's handshake message
-        handshake_message = self.socket.recv(1024).decode('utf-8')
-        print(f"Received handshake message: {handshake_message}")
-        
-        # Send a handshake response to the server
-        self.send_payload(self.socket, DataPacket.Payload(0, self.server_host, 0, "ACK"))
-        
-        print("Handshake completed.")
         
 if __name__ == "__main__":
-    client = Client(server_host='192.168.4.31', server_port = 12345)
-    client.run()
+    print("Enter the server's IP address.")
+    server_host = input("Server IP: ")
+    print("Enter the server's port.")
+    server_port = int(input("Server Port: "))
+    
+    print("--------------------------------------")
+        
+    print("Enter 'exit' to close the connection.")
+    client = Client(server_host, server_port)
+    try:
+        client.run()
+    except KeyboardInterrupt:
+        print("Closing connection...")
+        client.send_payload(client.socket, DataPacket.Payload(0, client.server_host, 0, "NCONN"))
+        client.socket.close()
+        print("Connection closed.")
+        exit(0)
+        
+        
